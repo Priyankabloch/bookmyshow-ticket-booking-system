@@ -1,0 +1,141 @@
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ajax</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+</head>
+
+<body>
+    <div class="container-movies">
+        <nav class="navbar navbar-dark bg-dark sticky-top">
+            <div class="form-inline">
+                <input class="form-control mr-sm-2 search-keyword" type="search" placeholder="Search name movie" aria-label="Search">
+                <button class="btn btn-outline-primary my-2 my-sm-0 search-movie">Search movie</button> &ensp;
+                <button class="btn btn-outline-success my-2 my-sm-0 show-all-movie">Show all movies</button>
+            </div>
+        </nav>
+        <div class="container">
+            <div class="row movies">
+            </div>
+        </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</body><style>
+  .container {
+    padding: 2rem;
+  }
+  
+  .card {
+    width: 15rem;
+    margin: auto;
+    margin-bottom: 15px;
+    /* border-radius: 50px 0px 0px 0px; */
+    border: none !important;
+    background-color: transparent !important;
+  }
+  
+  .card-body {
+    text-align: center;
+    color: white;
+    background-color: #333232;
+    border-radius: 0px 0px 20px 20px;
+  }
+  
+  /* .card-title {
+      font-size: 16px;
+  } */
+  
+</style>
+<script>
+  (function ($) {
+    $.fn.movie = function (options) {
+      var defaults = {};
+      var settings = $.extend({}, defaults, options);
+  
+      return this.each(function () {
+        var containerMovies = $(this);
+        var movies = containerMovies.find(".movies");
+        var keywordSearch = containerMovies.find(".search-keyword");
+        var searchMovie = containerMovies.find(".search-movie");
+        var showAllMovie = containerMovies.find(".show-all-movie");
+  
+        var addMovie = function (movie) {
+          movies.append(`<div class="col">
+                            <div class="card"><img class="card-img-top" src="${
+                              movie.image !== null
+                                ? movie.image.medium
+                                : "https://static.tvmaze.com/images/no-img/no-img-portrait-text.png"
+                            }" alt="${movie.name}">
+                              <div class="card-body">
+                                <h5 class="card-title">${movie.name}</h5>
+                                <p class="card-text">
+                                  <i class="fa fa-star"></i> ${
+                                    movie.rating.average
+                                      ? movie.rating.average
+                                      : "Not rating"
+                                  }</p>
+                                <a href="${
+                                  movie.url
+                                }" class="btn btn-primary">Watch movie</a>
+                               </div>
+                            </div>
+                          </div>`);
+        };
+        // load movies
+        var loadData = function () {
+          $.ajax({
+            type: "GET",
+            url: "https://api.tvmaze.com/shows?page=2",
+            success: function (movies) {
+              $.each(movies, function (index, movie) {
+                addMovie(movie);
+              });
+            },
+            error: function () {
+              alert("error loading data");
+            }
+          });
+        };
+        loadData();
+        // search by keywork
+        searchMovie.click(function () {
+          movies.find(".col").remove();
+          $.ajax({
+            type: "GET",
+            url: `https://api.tvmaze.com/search/shows?q=${keywordSearch.val()}`,
+            success: function (movies) {
+              if (keywordSearch.val().length > 0) {
+                if (movies.length === 0) {
+                  alert("Don't have movie you are looking for");
+                } else {
+                  $.each(movies, function (index, movie) {
+                    addMovie(movie.show);
+                  });
+                }
+              } else {
+                loadData();
+              }
+            },
+            error: function () {
+              alert("error loading data");
+            }
+          });
+        });
+        // show all
+        showAllMovie.click(function () {
+          movies.find(".col").remove();
+          keywordSearch.val("");
+          loadData();
+        });
+      });
+    };
+  })(jQuery);
+  
+  $(function () {
+    $(".container-movies").movie();
+  });
+  
+</script>
